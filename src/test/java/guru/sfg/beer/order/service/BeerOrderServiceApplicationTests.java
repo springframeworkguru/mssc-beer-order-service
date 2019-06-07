@@ -1,4 +1,4 @@
-package sfg.beer.order.service;
+package guru.sfg.beer.order.service;
 
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -7,7 +7,7 @@ import org.springframework.test.context.junit4.SpringRunner;
 
 @RunWith(SpringRunner.class)
 @SpringBootTest
-public class BeerOrderServiceTests {
+public class BeerOrderServiceApplicationTests {
 
     @Test
     public void contextLoads() {
