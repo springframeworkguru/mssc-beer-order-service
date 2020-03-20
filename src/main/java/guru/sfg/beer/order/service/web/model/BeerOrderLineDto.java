@@ -22,6 +22,7 @@ import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 
+import java.math.BigDecimal;
 import java.time.OffsetDateTime;
 import java.util.UUID;
 
@@ -44,4 +45,6 @@ public class BeerOrderLineDto extends BaseItem {
     private String beerName;
     private UUID beerId;
     private Integer orderQuantity = 0;
+    private String beerStyle;
+    private BigDecimal price;
 }
