@@ -1,4 +1,4 @@
-package guru.sfg.beer.common.model;
+package guru.sfg.brewery.model;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;

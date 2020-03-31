@@ -1,4 +1,4 @@
-package guru.sfg.beer.common.model;
+package guru.sfg.brewery.model;
 
 /**
  * Created by jeffreymzd : 3/15/20
