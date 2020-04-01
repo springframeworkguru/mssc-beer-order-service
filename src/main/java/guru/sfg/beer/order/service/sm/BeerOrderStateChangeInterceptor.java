@@ -1,4 +1,4 @@
-package guru.sfg.beer.order.service.services;
+package guru.sfg.beer.order.service.sm;
 
 import guru.sfg.beer.order.service.domain.BeerOrder;
 import guru.sfg.beer.order.service.domain.BeerOrderEventEnum;
@@ -12,6 +12,7 @@ import org.springframework.statemachine.support.StateMachineInterceptorAdapter;
 import org.springframework.statemachine.transition.Transition;
 import org.springframework.stereotype.Component;
 
+import javax.transaction.Transactional;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -26,15 +27,18 @@ public class BeerOrderStateChangeInterceptor extends StateMachineInterceptorAdap
 
     private final BeerOrderRepository beerOrderRepository;
 
+    @Transactional
     @Override
-    public void preStateChange(State<BeerOrderStatusEnum, BeerOrderEventEnum> state, Message<BeerOrderEventEnum> message, Transition<BeerOrderStatusEnum, BeerOrderEventEnum> transition, StateMachine<BeerOrderStatusEnum, BeerOrderEventEnum> stateMachine, StateMachine<BeerOrderStatusEnum, BeerOrderEventEnum> rootStateMachine) {
-        Optional.ofNullable(message).ifPresent(msg -> {
-            Optional.ofNullable((UUID) msg.getHeaders().getOrDefault(BEER_ORDER_HEADER, null))
-                    .ifPresent(uuid -> {
-                        BeerOrder order = beerOrderRepository.getOne(uuid);
-                        order.setOrderStatus(state.getId());
-                        beerOrderRepository.save(order);
-                    });
+    public void preStateChange(State<BeerOrderStatusEnum, BeerOrderEventEnum> state, Message<BeerOrderEventEnum> message,
+                               Transition<BeerOrderStatusEnum, BeerOrderEventEnum> transition,
+                               StateMachine<BeerOrderStatusEnum, BeerOrderEventEnum> stateMachine,
+                               StateMachine<BeerOrderStatusEnum, BeerOrderEventEnum> rootStateMachine) {
+        Optional.ofNullable(message)
+                .flatMap(msg -> Optional.ofNullable((UUID) msg.getHeaders().getOrDefault(BEER_ORDER_HEADER, null)))
+                .ifPresent(uuid -> {
+            BeerOrder order = beerOrderRepository.getOne(uuid);
+            order.setOrderStatus(state.getId());
+            beerOrderRepository.saveAndFlush(order);
         });
     }
 }
