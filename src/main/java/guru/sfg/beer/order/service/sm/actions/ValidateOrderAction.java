@@ -37,6 +37,5 @@ public class ValidateOrderAction implements Action<BeerOrderStatusEnum, BeerOrde
         jmsTemplate.convertAndSend(VALIDATE_ORDER_QUEUE, ValidateOrderRequest.builder()
                 .beerOrderDto(beerOrderMapper.beerOrderToDto(beerOrder))
                 .build());
-
     }
 }
