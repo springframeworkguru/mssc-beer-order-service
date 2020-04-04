@@ -39,8 +39,16 @@ public class BeerOrderManagerImpl implements BeerOrderManager {
         beerOrder.setId(null);
         beerOrder.setOrderStatus(BeerOrderStatusEnum.NEW);
 
-        BeerOrder savedBeerOrder = beerOrderRepository.save(beerOrder);
+        BeerOrder savedBeerOrder = beerOrderRepository.saveAndFlush(beerOrder);
         sendEvent(savedBeerOrder, BeerOrderEventEnum.VALIDATE_ORDER);
+
+        beerOrderRepository.findById(savedBeerOrder.getId())
+                .ifPresentOrElse(beerOrder1 -> {
+            log.debug("Confirmed order saved. Id: {}", beerOrder1.getId());
+        }, () -> {
+            log.warn("Order Not Saved: {}", beerOrder);
+        });
+
         return savedBeerOrder;
     }
 
@@ -105,7 +113,7 @@ public class BeerOrderManagerImpl implements BeerOrderManager {
     }
 
     private void updateAllocatedQty(BeerOrderDto beerOrderDto, BeerOrder beerOrder) {
-        BeerOrder allocatedOrder = beerOrderRepository.getOne(beerOrder.getId());
+        BeerOrder allocatedOrder = beerOrderRepository.findOneById(beerOrder.getId());
 
         allocatedOrder.getBeerOrderLines().forEach(beerOrderLine -> {
             beerOrderDto.getBeerOrderLines().forEach(beerOrderLineDto -> {
