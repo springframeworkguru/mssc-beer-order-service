@@ -165,6 +165,52 @@ class BeerOrderManagerImplIT {
 
     }
 
+    @Test
+    void testNewToFailAllocation() throws JsonProcessingException {
+
+        BeerDto beerDto = BeerDto.builder().id(beerId).upc("12345").build();
+        BeerPagedList list = new BeerPagedList(Collections.singletonList(beerDto));
+
+        wireMockServer.stubFor(get(BeerServiceImpl.BEER_BY_UPC_PATH + "12345?showInventoryOnHand=true")
+                .willReturn(okJson(objectMapper.writeValueAsString(list))));
+
+        BeerOrder beerOrder = createBeerOrder();
+        beerOrder.setCustomerRef("fail-allocation");
+
+        BeerOrder savedBeerOrder = beerOrderManager.newBeerOrder(beerOrder);
+
+        await().untilAsserted(() -> {
+            BeerOrder foundBeerOrder = beerOrderRepository.findById(beerOrder.getId()).get();
+            assertEquals(BeerOrderStatusEnum.ALLOCATION_EXCEPTION, foundBeerOrder.getOrderStatus());
+        });
+
+        BeerOrder savedBeerOrder2 = beerOrderRepository.findById(savedBeerOrder.getId()).get();
+
+        assertNotNull(savedBeerOrder2);
+        assertEquals(BeerOrderStatusEnum.ALLOCATION_EXCEPTION, savedBeerOrder2.getOrderStatus());
+
+    }
+
+    @Test
+    void testNewToPartialAllocation() throws JsonProcessingException {
+
+        BeerDto beerDto = BeerDto.builder().id(beerId).upc("12345").build();
+        BeerPagedList list = new BeerPagedList(Collections.singletonList(beerDto));
+
+        wireMockServer.stubFor(get(BeerServiceImpl.BEER_BY_UPC_PATH + "12345?showInventoryOnHand=true")
+                .willReturn(okJson(objectMapper.writeValueAsString(list))));
+
+        BeerOrder beerOrder = createBeerOrder();
+        beerOrder.setCustomerRef("partial-allocation");
+
+        BeerOrder savedBeerOrder = beerOrderManager.newBeerOrder(beerOrder);
+
+        await().untilAsserted(() -> {
+            BeerOrder foundBeerOrder = beerOrderRepository.findById(beerOrder.getId()).get();
+            assertEquals(BeerOrderStatusEnum.PENDING_INVENTORY, foundBeerOrder.getOrderStatus());
+        });
+    }
+
     public BeerOrder createBeerOrder() {
         BeerOrder beerOrder = BeerOrder.builder()
                 .customer(testCustomer)
