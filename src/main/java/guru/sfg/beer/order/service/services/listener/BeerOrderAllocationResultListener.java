@@ -23,6 +23,7 @@ public class BeerOrderAllocationResultListener {
 
     @JmsListener(destination = JmsConfiguration.ALLOCATE_ORDER_RESPONSE_QUEUE)
     public void listen(AllocateOrderResult allocateOrderResult) {
+        log.info("Receive allocation result: {}", allocateOrderResult);
         BeerOrderDto beerOrderDto = allocateOrderResult.getBeerOrderDto();
         final UUID beerOrderId = beerOrderDto.getId();
         final boolean allocationError = allocateOrderResult.getAllocationError();
