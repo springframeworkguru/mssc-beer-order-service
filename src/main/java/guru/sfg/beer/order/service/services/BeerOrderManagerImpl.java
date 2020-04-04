@@ -7,6 +7,7 @@ import guru.sfg.beer.order.service.repositories.BeerOrderRepository;
 import guru.sfg.beer.order.service.sm.BeerOrderStateChangeInterceptor;
 import guru.sfg.brewery.model.BeerOrderDto;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.messaging.Message;
 import org.springframework.messaging.support.MessageBuilder;
 import org.springframework.statemachine.StateMachine;
@@ -15,11 +16,13 @@ import org.springframework.statemachine.support.DefaultStateMachineContext;
 import org.springframework.stereotype.Service;
 
 import javax.transaction.Transactional;
+import java.util.Optional;
 import java.util.UUID;
 
 /**
  * Created by jeffreymzd on 3/30/20
  */
+@Slf4j
 @RequiredArgsConstructor
 @Service
 public class BeerOrderManagerImpl implements BeerOrderManager {
@@ -41,40 +44,53 @@ public class BeerOrderManagerImpl implements BeerOrderManager {
         return savedBeerOrder;
     }
 
+    @Transactional
     @Override
     public void processValidationResult(UUID orderId, boolean isValid) {
-        BeerOrder beerOrder = beerOrderRepository.getOne(orderId);
+        Optional<BeerOrder> beerOrderOptional = beerOrderRepository.findById(orderId);
 
-        if (isValid) {
-            sendEvent(beerOrder, BeerOrderEventEnum.VALIDATION_PASSED);
-
-            BeerOrder validatedOrder = beerOrderRepository.findOneById(orderId);
-            sendEvent(validatedOrder, BeerOrderEventEnum.ALLOCATE_ORDER);
-        } else {
-            sendEvent(beerOrder, BeerOrderEventEnum.VALIDATION_FAILED);
-        }
+        beerOrderOptional.ifPresentOrElse(beerOrder -> {
+            if (isValid) {
+                sendEvent(beerOrder, BeerOrderEventEnum.VALIDATION_PASSED);
+                BeerOrder validatedOrder = beerOrderRepository.findOneById(orderId);
+                sendEvent(validatedOrder, BeerOrderEventEnum.ALLOCATE_ORDER);
+            } else {
+                sendEvent(beerOrder, BeerOrderEventEnum.VALIDATION_FAILED);
+            }
+        }, () -> log.error("Order Not Found. Id: {}", orderId));
     }
 
+    @Transactional
     @Override
     public void beerOrderAllocationSuccess(BeerOrderDto beerOrderDto) {
-        BeerOrder beerOrder = beerOrderRepository.getOne(beerOrderDto.getId());
-        sendEvent(beerOrder, BeerOrderEventEnum.ALLOCATION_SUCCESS);
+        Optional<BeerOrder> beerOrderOptional = beerOrderRepository.findById(beerOrderDto.getId());
 
-        updateAllocatedQty(beerOrderDto, beerOrder);
+        beerOrderOptional.ifPresentOrElse(beerOrder -> {
+            sendEvent(beerOrder, BeerOrderEventEnum.ALLOCATION_SUCCESS);
+
+            updateAllocatedQty(beerOrderDto, beerOrder);
+        }, () -> log.error("Order Not Found. Id: {}", beerOrderDto.getId()));
     }
 
+    @Transactional
     @Override
     public void beerOrderAllocationError(BeerOrderDto beerOrderDto) {
-        BeerOrder beerOrder = beerOrderRepository.getOne(beerOrderDto.getId());
-        sendEvent(beerOrder, BeerOrderEventEnum.ALLOCATION_FAILED);
+        Optional<BeerOrder> beerOrderOptional = beerOrderRepository.findById(beerOrderDto.getId());
+
+        beerOrderOptional.ifPresentOrElse(beerOrder -> sendEvent(beerOrder, BeerOrderEventEnum.ALLOCATION_FAILED),
+                () -> log.error("Order Not Found. Id: {}", beerOrderDto.getId()));
     }
 
+    @Transactional
     @Override
     public void beerOrderPendingInventory(BeerOrderDto beerOrderDto) {
-        BeerOrder beerOrder = beerOrderRepository.getOne(beerOrderDto.getId());
-        sendEvent(beerOrder, BeerOrderEventEnum.ALLOCATION_NO_INVENTORY);
+        Optional<BeerOrder> beerOrderOptional = beerOrderRepository.findById(beerOrderDto.getId());
 
-        updateAllocatedQty(beerOrderDto, beerOrder);
+        beerOrderOptional.ifPresentOrElse(beerOrder -> {
+            sendEvent(beerOrder, BeerOrderEventEnum.ALLOCATION_NO_INVENTORY);
+            updateAllocatedQty(beerOrderDto, beerOrder);
+
+        }, () -> log.error("Order Not Found. Id: {}", beerOrderDto.getId()));
     }
 
     private void updateAllocatedQty(BeerOrderDto beerOrderDto, BeerOrder beerOrder) {

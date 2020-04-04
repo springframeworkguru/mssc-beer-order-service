@@ -35,6 +35,9 @@ public class AllocateOrderAction implements Action<BeerOrderStatusEnum, BeerOrde
 
         BeerOrder beerOrder = beerOrderRepository.getOne((UUID) stateContext.getMessageHeader(BEER_ORDER_HEADER));
 
+        System.out.println("################ AllocateOrderAction is called! ######################");
+        System.out.println(stateContext.getMessageHeader(BEER_ORDER_HEADER));
+
         jmsTemplate.convertAndSend(JmsConfiguration.ALLOCATE_ORDER_QUEUE, AllocateOrderRequest.builder()
                 .beerOrderDto(beerOrderMapper.beerOrderToDto(beerOrder))
                 .build());
