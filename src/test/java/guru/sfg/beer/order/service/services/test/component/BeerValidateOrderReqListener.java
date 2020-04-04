@@ -1,6 +1,7 @@
 package guru.sfg.beer.order.service.services.test.component;
 
 import guru.sfg.beer.order.service.config.JmsConfiguration;
+import guru.sfg.brewery.model.BeerOrderDto;
 import guru.sfg.brewery.model.event.ValidateOrderRequest;
 import guru.sfg.brewery.model.event.ValidateOrderResult;
 import lombok.RequiredArgsConstructor;
@@ -22,10 +23,17 @@ public class BeerValidateOrderReqListener {
     @JmsListener(destination = JmsConfiguration.VALIDATE_ORDER_QUEUE)
     public void listen(ValidateOrderRequest validateOrderRequest) {
 
-        System.out.println("#################### I RAN ########################");
+        BeerOrderDto beerOrderDto = validateOrderRequest.getBeerOrderDto();
+
+        log.debug("Receive validate order request. Id: {}", beerOrderDto.getId());
+
+        boolean isValid = true;
+        // condition to fail validation
+        if ("fail-validation".equals(beerOrderDto.getCustomerRef()))
+            isValid = false;
 
         jmsTemplate.convertAndSend(JmsConfiguration.VALIDATE_ORDER_RESPONSE_QUEUE, ValidateOrderResult.builder()
-                .isValid(true)
+                .isValid(isValid)
                 .beerOrderId(validateOrderRequest.getBeerOrderDto().getId())
                 .build());
 

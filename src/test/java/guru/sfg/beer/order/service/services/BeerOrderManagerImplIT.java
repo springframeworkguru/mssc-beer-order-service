@@ -79,7 +79,7 @@ class BeerOrderManagerImplIT {
     }
 
     @Test
-    void testNewToAllocated() throws JsonProcessingException, InterruptedException {
+    void testNewToAllocated() throws JsonProcessingException {
 
         BeerDto beerDto = BeerDto.builder().id(beerId).upc("12345").build();
         BeerPagedList list = new BeerPagedList(Collections.singletonList(beerDto));
@@ -106,7 +106,27 @@ class BeerOrderManagerImplIT {
     }
 
     @Test
-    void testNewToPickedUp() throws JsonProcessingException, InterruptedException {
+    void testNewToFailValidation() throws JsonProcessingException {
+
+        BeerDto beerDto = BeerDto.builder().id(beerId).upc("12345").build();
+        BeerPagedList list = new BeerPagedList(Collections.singletonList(beerDto));
+
+        wireMockServer.stubFor(get(BeerServiceImpl.BEER_BY_UPC_PATH + "12345?showInventoryOnHand=true")
+                .willReturn(okJson(objectMapper.writeValueAsString(list))));
+
+        BeerOrder beerOrder = createBeerOrder();
+        beerOrder.setCustomerRef("fail-validation");
+
+        BeerOrder savedBeerOrder = beerOrderManager.newBeerOrder(beerOrder);
+
+        await().untilAsserted(() -> {
+            BeerOrder foundBeerOrder = beerOrderRepository.findById(beerOrder.getId()).get();
+            assertEquals(BeerOrderStatusEnum.VALIDATION_EXCEPTION, foundBeerOrder.getOrderStatus());
+        });
+    }
+
+    @Test
+    void testNewToPickedUp() throws JsonProcessingException {
 
         BeerDto beerDto = BeerDto.builder().id(beerId).upc("12345").build();
         BeerPagedList list = new BeerPagedList(Collections.singletonList(beerDto));
