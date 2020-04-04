@@ -1,6 +1,7 @@
 package guru.sfg.beer.order.service.services.test.component;
 
 import guru.sfg.beer.order.service.config.JmsConfiguration;
+import guru.sfg.brewery.model.BeerOrderDto;
 import guru.sfg.brewery.model.event.AllocateOrderRequest;
 import guru.sfg.brewery.model.event.AllocateOrderResult;
 import lombok.RequiredArgsConstructor;
@@ -24,10 +25,15 @@ public class BeerAllocateOrderReqListener {
 
         System.out.println("#################### I RAN TOO ########################");
 
+        BeerOrderDto beerOrderDto = allocateOrderRequest.getBeerOrderDto();
+        beerOrderDto.getBeerOrderLines().forEach(beerOrderLineDto -> {
+            beerOrderLineDto.setQuantityAllocated(beerOrderLineDto.getOrderQuantity());
+        });
+
         jmsTemplate.convertAndSend(JmsConfiguration.ALLOCATE_ORDER_RESPONSE_QUEUE, AllocateOrderResult.builder()
                 .allocationError(false)
                 .pendingInventory(false)
-                .beerOrderDto(allocateOrderRequest.getBeerOrderDto())
+                .beerOrderDto(beerOrderDto)
                 .build());
     }
 }

@@ -100,6 +100,9 @@ class BeerOrderManagerImplIT {
 
         assertNotNull(savedBeerOrder2);
         assertEquals(BeerOrderStatusEnum.ALLOCATED, savedBeerOrder2.getOrderStatus());
+        savedBeerOrder2.getBeerOrderLines().forEach(beerOrderLine -> {
+            assertEquals(beerOrderLine.getOrderQuantity(), beerOrderLine.getQuantityAllocated());
+        });
     }
 
     public BeerOrder createBeerOrder() {
