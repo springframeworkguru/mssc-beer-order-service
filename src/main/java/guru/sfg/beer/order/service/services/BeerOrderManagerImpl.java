@@ -31,7 +31,7 @@ public class BeerOrderManagerImpl implements BeerOrderManager {
 
     private final BeerOrderRepository beerOrderRepository;
     private final StateMachineFactory<BeerOrderStatusEnum, BeerOrderEventEnum> stateMachineFactory;
-    private final BeerOrderStateChangeInterceptor beerOrderStateChangeIntercepter;
+    private final BeerOrderStateChangeInterceptor beerOrderStateChangeInterceptor;
 
     @Transactional
     @Override
@@ -57,7 +57,7 @@ public class BeerOrderManagerImpl implements BeerOrderManager {
             } else {
                 sendEvent(beerOrder, BeerOrderEventEnum.VALIDATION_FAILED);
             }
-        }, () -> log.error("Order Not Found. Id: {}", orderId));
+        }, () -> log.error("Order Not Found. Cannot validate Id: {}", orderId));
     }
 
     @Transactional
@@ -69,7 +69,7 @@ public class BeerOrderManagerImpl implements BeerOrderManager {
             sendEvent(beerOrder, BeerOrderEventEnum.ALLOCATION_SUCCESS);
 
             updateAllocatedQty(beerOrderDto, beerOrder);
-        }, () -> log.error("Order Not Found. Id: {}", beerOrderDto.getId()));
+        }, () -> log.error("Order Not Found. Cannot allocate Id: {}", beerOrderDto.getId()));
     }
 
     @Transactional
@@ -91,6 +91,17 @@ public class BeerOrderManagerImpl implements BeerOrderManager {
             updateAllocatedQty(beerOrderDto, beerOrder);
 
         }, () -> log.error("Order Not Found. Id: {}", beerOrderDto.getId()));
+    }
+
+    @Override
+    public void beerOrderPickedUp(UUID orderId) {
+
+        Optional<BeerOrder> pickedUpBeerOrderOptional = beerOrderRepository.findById(orderId);
+
+        pickedUpBeerOrderOptional.ifPresentOrElse(beerOrder -> {
+            sendEvent(beerOrder, BeerOrderEventEnum.BEER_ORDER_PICKED_UP);
+
+        }, () -> log.error("Order Not Found. Cannot deliver Id: {}", orderId));
     }
 
     private void updateAllocatedQty(BeerOrderDto beerOrderDto, BeerOrder beerOrder) {
@@ -124,7 +135,7 @@ public class BeerOrderManagerImpl implements BeerOrderManager {
 
         sm.getStateMachineAccessor()
                 .doWithAllRegions(sma -> {
-                    sma.addStateMachineInterceptor(beerOrderStateChangeIntercepter);
+                    sma.addStateMachineInterceptor(beerOrderStateChangeInterceptor);
                     sma.resetStateMachine(new DefaultStateMachineContext<>(beerOrder.getOrderStatus(), null, null, null));
                 });
 
