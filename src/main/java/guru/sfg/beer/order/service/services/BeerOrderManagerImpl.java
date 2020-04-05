@@ -42,8 +42,6 @@ public class BeerOrderManagerImpl implements BeerOrderManager {
 
         BeerOrder savedBeerOrder = beerOrderRepository.saveAndFlush(beerOrder);
 
-        awaitForStatus(savedBeerOrder.getId(), BeerOrderStatusEnum.NEW);
-
         sendEvent(savedBeerOrder, BeerOrderEventEnum.VALIDATE_ORDER);
 
         beerOrderRepository.findById(savedBeerOrder.getId())

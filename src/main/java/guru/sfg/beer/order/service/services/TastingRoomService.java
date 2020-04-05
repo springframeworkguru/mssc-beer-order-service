@@ -37,14 +37,16 @@ public class TastingRoomService {
     }
 
     @Transactional
-    @Scheduled(fixedRate = 100000) //run every 5 seconds
+    @Scheduled(fixedRate = 10000) //run every 10 seconds
     public void placeTastingRoomOrder(){
 
         List<Customer> customerList = customerRepository.findAllByCustomerNameLike(BeerOrderBootStrap.TASTING_ROOM);
 
+        log.debug("Customer size in tasting room: {}", customerList.size());
         if (customerList.size() == 1){ //should be just one
             doPlaceOrder(customerList.get(0));
         } else {
+            // run "localmysql" profile to ensure customer read from local database and avoid this error
             log.error("Too many or too few tasting room customers found");
         }
     }
