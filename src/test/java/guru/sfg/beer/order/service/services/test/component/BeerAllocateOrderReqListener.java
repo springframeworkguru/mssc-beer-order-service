@@ -21,7 +21,7 @@ public class BeerAllocateOrderReqListener {
     private final JmsTemplate jmsTemplate;
 
     @JmsListener(destination = JmsConfiguration.ALLOCATE_ORDER_QUEUE)
-    public void listen(AllocateOrderRequest allocateOrderRequest) {
+    public void listen(AllocateOrderRequest allocateOrderRequest) throws InterruptedException {
 
         BeerOrderDto beerOrderDto = allocateOrderRequest.getBeerOrderDto();
 
@@ -44,10 +44,11 @@ public class BeerAllocateOrderReqListener {
             }
         });
 
-        jmsTemplate.convertAndSend(JmsConfiguration.ALLOCATE_ORDER_RESPONSE_QUEUE, AllocateOrderResult.builder()
-                .allocationError(allocationError)
-                .pendingInventory(pendingInventory)
-                .beerOrderDto(beerOrderDto)
-                .build());
+        if (!"cancel-allocation-pending".equals(beerOrderDto.getCustomerRef()))
+            jmsTemplate.convertAndSend(JmsConfiguration.ALLOCATE_ORDER_RESPONSE_QUEUE, AllocateOrderResult.builder()
+                    .allocationError(allocationError)
+                    .pendingInventory(pendingInventory)
+                    .beerOrderDto(beerOrderDto)
+                    .build());
     }
 }

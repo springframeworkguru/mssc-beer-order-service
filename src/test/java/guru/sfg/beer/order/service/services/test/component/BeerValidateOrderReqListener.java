@@ -21,7 +21,7 @@ public class BeerValidateOrderReqListener {
     private final JmsTemplate jmsTemplate;
 
     @JmsListener(destination = JmsConfiguration.VALIDATE_ORDER_QUEUE)
-    public void listen(ValidateOrderRequest validateOrderRequest) {
+    public void listen(ValidateOrderRequest validateOrderRequest) throws InterruptedException {
 
         BeerOrderDto beerOrderDto = validateOrderRequest.getBeerOrderDto();
 
@@ -32,10 +32,12 @@ public class BeerValidateOrderReqListener {
         if ("fail-validation".equals(beerOrderDto.getCustomerRef()))
             isValid = false;
 
-        jmsTemplate.convertAndSend(JmsConfiguration.VALIDATE_ORDER_RESPONSE_QUEUE, ValidateOrderResult.builder()
-                .isValid(isValid)
-                .beerOrderId(validateOrderRequest.getBeerOrderDto().getId())
-                .build());
+        if (!"cancel-validation-pending".equals(beerOrderDto.getCustomerRef()))
+            jmsTemplate.convertAndSend(JmsConfiguration.VALIDATE_ORDER_RESPONSE_QUEUE,
+                    ValidateOrderResult.builder()
+                            .isValid(isValid)
+                            .beerOrderId(validateOrderRequest.getBeerOrderDto().getId())
+                            .build());
 
     }
 }
