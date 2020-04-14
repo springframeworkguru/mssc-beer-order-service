@@ -15,38 +15,42 @@
  *     along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package guru.sfg.beer.order.service.web.model;
+package guru.sfg.brewery.model;
 
+import com.fasterxml.jackson.annotation.JsonFormat;
+import com.fasterxml.jackson.annotation.JsonProperty;
+import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
-import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 
-import java.math.BigDecimal;
 import java.time.OffsetDateTime;
+import java.util.List;
 import java.util.UUID;
 
 @Data
 @NoArgsConstructor
-@EqualsAndHashCode(callSuper = true)
-public class BeerOrderLineDto extends BaseItem {
+@AllArgsConstructor
+@Builder
+public class BeerOrderDto {
 
-    @Builder
-    public BeerOrderLineDto(UUID id, Integer version, OffsetDateTime createdDate, OffsetDateTime lastModifiedDate,
-                            String upc, String beerName, String beerStyle, UUID beerId, Integer orderQuantity, BigDecimal price) {
-        super(id, version, createdDate, lastModifiedDate);
-        this.upc = upc;
-        this.beerName = beerName;
-        this.beerStyle = beerStyle;
-        this.beerId = beerId;
-        this.orderQuantity = orderQuantity;
-        this.price = price;
-    }
+    @JsonProperty("id")
+    private UUID id = null;
 
-    private String upc;
-    private String beerName;
-    private String beerStyle;
-    private UUID beerId;
-    private Integer orderQuantity = 0;
-    private BigDecimal price;
+    @JsonProperty("version")
+    private Integer version = null;
+
+    @JsonFormat(pattern="yyyy-MM-dd'T'HH:mm:ssZ", shape=JsonFormat.Shape.STRING)
+    @JsonProperty("createdDate")
+    private OffsetDateTime createdDate = null;
+
+    @JsonFormat(pattern="yyyy-MM-dd'T'HH:mm:ssZ", shape=JsonFormat.Shape.STRING)
+    @JsonProperty("lastModifiedDate")
+    private OffsetDateTime lastModifiedDate = null;
+
+    private UUID customerId;
+    private String customerRef;
+    private List<BeerOrderLineDto> beerOrderLines;
+    private String orderStatus;
+    private String orderStatusCallbackUrl;
 }
