@@ -15,7 +15,7 @@
  *     along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package guru.sfg.beer.order.service.web.model;
+package guru.sfg.brewery.model;
 
 public enum OrderStatusEnum {
     NEW, READY, PICKED_UP
