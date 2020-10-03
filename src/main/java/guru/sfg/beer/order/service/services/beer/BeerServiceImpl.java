@@ -25,8 +25,12 @@ public class BeerServiceImpl implements BeerService {
     @Value("${sfg.brewery.beer.service.host}")
     private String beerServiceHost;
 
-    public BeerServiceImpl(RestTemplateBuilder restTemplateBuilder) {
-        restTemplate = restTemplateBuilder.build();
+    public BeerServiceImpl(RestTemplateBuilder restTemplateBuilder,
+                           @Value("${sfg.brewery.beer.user}") String beerUser,
+                           @Value("${sfg.brewery.beer.password}") String beerPassword) {
+        restTemplate = restTemplateBuilder
+                .basicAuthentication(beerUser, beerPassword)
+                .build();
     }
 
     @Override
